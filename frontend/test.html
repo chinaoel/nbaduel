@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>NBA Quiz Test</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 20px;
+      }
+      #log {
+        white-space: pre-wrap;
+        background: #f0f0f0;
+        padding: 10px;
+        height: 300px;
+        overflow-y: scroll;
+      }
+      button {
+        margin-top: 5px;
+      }
+      #silhouette {
+        width: 300px;
+        height: 300px;
+        object-fit: contain;
+        display: block;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>NBA Quiz Test Client</h2>
+
+    <label>Name: <input type="text" id="name" value="PlayerA" /></label><br />
+    <label>Room Key: <input type="text" id="key" value="room123" /></label
+    ><br />
+    <button onclick="join()">1. Join Room</button>
+    <button onclick="ready()">2. Ready</button>
+    <button onclick="startGame()">3. Start Game</button><br /><br />
+
+    <div id="questionBox" style="display: none">
+      <h3 id="questionTitle">Who's this player?</h3>
+      <div id="mediaContainer"></div>
+
+      <ul id="options"></ul>
+    </div>
+
+    <div id="log"></div>
+
+    <script>
+      let ws;
+
+      function log(msg) {
+        const logBox = document.getElementById("log");
+        logBox.textContent += msg + "\n";
+        logBox.scrollTop = logBox.scrollHeight;
+      }
+
+      function join() {
+        ws = new WebSocket("ws://localhost:8000/ws");
+
+        ws.onopen = () => {
+          log("✅ WebSocket connected");
+          const name = document.getElementById("name").value;
+          const key = document.getElementById("key").value;
+          ws.send(JSON.stringify({ event: "join", name, key }));
+        };
+
+        ws.onmessage = (e) => {
+          const msg = JSON.parse(e.data);
+          log("📩 " + JSON.stringify(msg));
+
+          if (msg.event === "question") {
+            showQuestion(msg.question);
+          } else if (msg.event === "game_over") {
+            alert("Game Over!\nScores: " + msg.scores.join(" vs "));
+          }
+        };
+
+        ws.onclose = () => log("❌ Connection closed");
+        ws.onerror = (e) => log("❌ WebSocket error: " + e.message);
+      }
+
+      function ready() {
+        ws.send(JSON.stringify({ event: "ready" }));
+      }
+
+      function startGame() {
+        ws.send(JSON.stringify({ event: "start_game" }));
+      }
+
+      function sendAnswer(choice) {
+        ws.send(JSON.stringify({ event: "answer", choice }));
+      }
+
+      function showQuestion(q) {
+        const box = document.getElementById("questionBox");
+        const title = document.getElementById("questionTitle");
+        const list = document.getElementById("options");
+
+        box.style.display = "block";
+        title.textContent = "Who's this player?";
+        list.innerHTML = "";
+
+        // 動態插入圖或影片
+        const mediaContainer = document.getElementById("mediaContainer");
+        mediaContainer.innerHTML = ""; // 清空
+
+        const ext = q.id.endsWith(".mp4") ? "mp4" : "webp";
+        const path = `http://localhost:8000/static/videos/${q.id}`;
+
+        if (ext === "webp") {
+          const img = document.createElement("img");
+          img.src = path;
+          img.width = 300;
+          img.height = 300;
+          img.style.objectFit = "contain";
+          mediaContainer.appendChild(img);
+        } else {
+          const video = document.createElement("video");
+          video.src = path;
+          video.width = 300;
+          video.height = 300;
+          video.autoplay = true;
+          video.muted = true;
+          video.loop = true;
+          mediaContainer.appendChild(video);
+        }
+
+        // 顯示選項
+        q.options.forEach((option) => {
+          const li = document.createElement("li");
+          const btn = document.createElement("button");
+          btn.textContent = option;
+          btn.onclick = () => sendAnswer(option);
+          li.appendChild(btn);
+          list.appendChild(li);
+        });
+      }
+    </script>
+  </body>
+</html>
