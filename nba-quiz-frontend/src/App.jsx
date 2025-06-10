@@ -18,8 +18,9 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleJoin = (name, roomKey) => {
-    const wsProto = window.location.protocol === "https:" ? "wss" : "ws";
-    const socket = new WebSocket(`${wsProto}://${window.location.host}/ws`);
+    const backendUrl = import.meta.env.VITE_API_BASE_URL;
+
+    const socket = new WebSocket(`${backendUrl}/ws`);
 
     setIsJoining(true);
     setErrorMsg("");
