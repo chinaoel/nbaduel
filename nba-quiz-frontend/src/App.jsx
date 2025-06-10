@@ -18,7 +18,9 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleJoin = (name, roomKey) => {
-    const socket = new WebSocket("ws://localhost:8000/ws");
+    const wsProto = window.location.protocol === "https:" ? "wss" : "ws";
+    const socket = new WebSocket(`${wsProto}://${window.location.host}/ws`);
+
     setIsJoining(true);
     setErrorMsg("");
     socket.onopen = () => {
