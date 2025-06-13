@@ -71,10 +71,14 @@ func (r *Room) PlayerReady(p *Player) bool {
 	r.ReadyCount++
 	if r.ReadyCount == 1 {
 		// notify the opponent
-		r.getOpponent(p).SendJSON(
-			map[string]interface{}{
-				"event":"opponent_ready",
-			})
+		var opponent = r.getOpponent(p)
+		if opponent != nil {
+			// second player ready first
+			opponent.SendJSON(
+				map[string]interface{}{
+					"event":"opponent_ready",
+				})
+		}
 	}
 	if r.ReadyCount == 2 {
 		for _, p := range r.Players {
@@ -94,6 +98,7 @@ func (r *Room) PlayerReady(p *Player) bool {
 				if p != nil {
 					p.Conn.WriteJSON(map[string]any{
 						"event": "start_game",
+						"opponent": r.getOpponent(p).Name,
 					})
 				}
 			}
@@ -223,6 +228,8 @@ func (r *Room) HandleAnswer(player *Player, choice string) {
 	r.Lock()
 	defer r.Unlock()
 
+	fmt.Println("[Answer] player", player.Name, choice )
+
 	rs := r.RoundState
 	if rs == nil {
 		return
@@ -239,10 +246,11 @@ func (r *Room) HandleAnswer(player *Player, choice string) {
 
 	// 忽略重複答題
 	if rs.AnsweredBy[playerIdx] {
+		
 		return
 	}
 	rs.AnsweredBy[playerIdx] = true // ✅ 記錄已答過
-
+	fmt.Println("[Answer] reach here")
 	correct := r.Questions[r.CurrentQ].Answer == choice
 	if correct {
 
@@ -259,6 +267,8 @@ func (r *Room) HandleAnswer(player *Player, choice string) {
 				"correct":   true,
 				"score":     score,
 				"playerIdx": playerIdx,
+				"name" : r.Players[playerIdx],
+				"choice": choice,
 			})
 		}
 
@@ -274,6 +284,8 @@ func (r *Room) HandleAnswer(player *Player, choice string) {
 				"correct":   false,
 				"score":     0,
 				"playerIdx": playerIdx,
+				"name" : r.Players[playerIdx],
+				"choice": choice,
 			})
 		}
 

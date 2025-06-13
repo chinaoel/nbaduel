@@ -16,6 +16,8 @@ export default function App() {
   const [showModal, setShowModal] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [playerIndex, setPlayerIndex] = useState(null);
+  const [opponent, setOpponent] = useState(null);
 
   const handleJoin = (name, roomKey) => {
     const backendUrl = import.meta.env.VITE_API_BASE_URL;
@@ -38,6 +40,7 @@ export default function App() {
 
         if (!msg.alreadyJoined) {
           setPage("prepare"); // ✅ 僅在第一次加入時跳頁
+          setPlayerIndex(msg.playerIndex);
         }
 
         setIsJoining(false);
@@ -52,12 +55,19 @@ export default function App() {
     setScores(finalScore);
     setShowModal(true);
   };
-  const handleStart = () => setPage("game");
+  const handleStart = (opponent) => {
+    setPage("game");
+    setOpponent(opponent);
+  };
   const handleBackToHome = () => {
     setShowModal(false);
     setPage("welcome");
     setScores([]);
     ws.close();
+  };
+
+  const onJoinRoom = (playerIndex) => {
+    setPlayerIndex(playerIndex);
   };
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -75,9 +85,18 @@ export default function App() {
           ws={ws}
           players={players}
           onStart={handleStart}
+          onRoomJoined={onJoinRoom}
         />
       )}
-      {page === "game" && <GamePage ws={ws} onGameOver={handleGameOver} />}
+      {page === "game" && (
+        <GamePage
+          ws={ws}
+          onGameOver={handleGameOver}
+          name={name}
+          playerIdx={playerIndex}
+          opponent={opponent}
+        />
+      )}
 
       {showModal && (
         <GameOverModal scores={scores} onRestart={handleBackToHome} />

@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-export default function PreparePage({ name, roomKey, ws, players, onStart }) {
+export default function PreparePage({
+  name,
+  roomKey,
+  ws,
+  players,
+  onStart,
+  onRoomJoined,
+}) {
   const [ready, setReady] = useState(false);
   const [otherReady, setOtherReady] = useState(false);
   const [countdown, setCountdown] = useState(null);
@@ -19,7 +26,7 @@ export default function PreparePage({ name, roomKey, ws, players, onStart }) {
       } else if (msg.event === "countdown") {
         setCountdown(msg.seconds);
       } else if (msg.event === "start_game") {
-        onStart();
+        onStart(msg.opponent);
       } else if (msg.event === "opponent_joined") {
         setOpponent(msg.playerName);
       } else if (msg.event === "oponent_ready") {

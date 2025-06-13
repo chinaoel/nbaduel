@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -113,6 +114,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case "answer":
+			fmt.Println("[Answer] player", player, room, msg.Choice )
 			if room != nil && player != nil {
 				room.HandleAnswer(player, msg.Choice)
 			}
